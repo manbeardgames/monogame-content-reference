@@ -104,8 +104,13 @@ The table below explains the different options and their values
 
 
 # Usage
-This template will auto generate a class .cs file called ContentReference.cs that you can use in your project to load content in as follows (example below uses the content hierarchy described at the top of the readme)
+This template will auto generate a class .cs file called ContentReference.cs.  
+
+After adding and building content using the Content Pipeline Tool, right-click the ContentReference.tt file in the Solution Explorer window and select "Run Custom Tool". This will refresh the generated class file with the references to the new content added. 
+
+Now, when loading content in your game using the ContentManager object, instead of having to remember all those pesky string for the path to your content, you can just use the values in the generated ContentReference as follows (example below uses the content hierarchy described at the top of the readme)
 
 ```csharp
 var texture = Content.Load<Texture2D>(ContentReference.Textures.Player_01);
+var menuSfx = Content.Load<SoundEffect>(ContentReference.Audio.SFX.Menu_click);
 ```
