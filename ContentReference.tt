@@ -1,0 +1,349 @@
+<#@ template debug="false" hostspecific="true" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Text.RegularExpressions" #>
+<#@ output extension=".cs" #>
+<#
+// -------------------------------------------------------------
+//	Generator Settings
+//	Adjust the settings below. Explinations are provided
+// -------------------------------------------------------------
+
+//	Set this to true if you want the generated class to be 
+//	encapsulated by a namespace
+INCLUDE_NAMESPACE = false;
+
+//	If you set the above to true, enter the name of the namespace
+//	you wish to use. 
+NAMESPACE = "";
+
+//	This determines how Class Names are generated
+//	CLASS_STYLE.FirstCharUpper = Only the first character of the class name is upper case
+//	CLASS_STYLE.MatchName = Name is the same casing as the directory name its based on
+CLASS_STYLE = ClassStyle.FirstCharUpper;
+
+//	This determines how Field Names are generated
+//	FIELD_STYLE.Proper = Name is camel case
+//	FIELD_STYLE.MatchName = Name is the same casing as the directory/filename
+FIELD_STYLE = FieldStyle.MatchName;
+
+//	This determines how to handle spaces in file names
+//	SpaceStyle.Remove = Removes all spaces
+//	SpaceStyle.Underscore = Replaces all spaces with _ 
+SPACE_STYLE = SpaceStyle.Remove;
+
+
+//	This determines how to handle file names that match a 
+//	reseved C# keyword
+//	ReservedStyle.AtSymbol = Places an @ symbole in front of the generated name
+//	ReservedStyle.Underscore = Places an _ in front of the generated name
+RESERVED_STYLE = ReservedStyle.AtSymbol;
+
+
+//	This is the directory where the content tool outputs the .xnb files it builds
+//	For MonoGame Cross Platform Desktop Project it's "bin\DesktopGl"
+CONTENT_DIR = @"bin\DesktopGL";
+#>
+<#
+
+
+
+
+
+
+
+
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//	DO NOT EDIT ANYTHING PAST THIS LINE
+//	If you do choose to edit anything past this line, you do so
+//	at your own risk.
+// xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+
+
+
+
+
+
+
+
+
+#>
+<#
+	INVALID_DIRECTORIES = new string[] {"content", "bin", "obj"};
+	Run();
+#>
+<#+
+	private enum ClassStyle {FirstCharUpper, MatchName}
+	private enum FieldStyle { Proper, MatchName }
+	private enum SpaceStyle { Remove, Underscore }
+	private enum ReservedStyle { AtSymbol, Underscore }
+	private bool INCLUDE_NAMESPACE = false;
+	private string NAMESPACE = "";
+	private ClassStyle CLASS_STYLE = ClassStyle.MatchName;
+	private FieldStyle FIELD_STYLE = FieldStyle.Proper;
+	private SpaceStyle SPACE_STYLE = SpaceStyle.Underscore;
+	private ReservedStyle RESERVED_STYLE = ReservedStyle.AtSymbol;
+	private string CONTENT_DIR = "bin/DesktopGL";
+	private string[] INVALID_DIRECTORIES = new string[] {"content", "bin", "obj"};
+
+	//	This is a list of all reserved keywords in C#
+	private HashSet<string> keywords = new HashSet<string>()
+	{
+		"abstract", "as", "base", "bool", "break", "byte", "case", "catch", "char", "checked", "class", "const",
+		"continue", "decimal", "default", "delegate", "do", "double", "else", "enum", "event", "explicit", "extern", "false",
+		"finally", "fixed", "float", "for", "foreach", "goto", "if", "implicit", "in", "int", "interface", "internal",
+		"is", "lock", "long", "namespace", "new", "null", "object", "operator", "out", "override", "params", "private",
+		"protected", "public", "readonly", "ref", "return", "sbyte", "sealed", "short", "sizeof", "stackalloc", "static", "string",
+		"struct", "switch", "this", "throw", "true", "try", "typeof", "uint", "ulong", "unchecked", "unsafe", "ushort",
+		"using", "using", "static", "virtual", "void", "volatile", "while", "add", "alias", "ascending", "async", "await", "by",
+		"descending", "dynamic", "equals", "from", "get", "global", "group", "into", "join",
+		"let", "nameof", "on", "orderby", "partial", "partial", "remove", "select", "set",
+		"value", "var", "when", "where", "where", "yield"
+	};
+
+
+	private void Run()
+	{
+		var indent = 0;
+		if(INCLUDE_NAMESPACE)
+		{
+			indent++;
+			WriteLine($"namespace {NAMESPACE}{Environment.NewLine}{{");
+		}
+
+		var tabs = new string('\t', indent);
+		WriteLine($"{tabs}public static class ContentReference{Environment.NewLine}{tabs}{{");
+
+		//	Get an array of all directories located in CONTENT_DIR
+		var directories = Directory.GetDirectories(Host.ResolvePath(CONTENT_DIR));
+
+		//	Iterate all of the directories found
+		foreach(var directory in directories)
+		{
+			//	Get the directory name
+			string directoryName = new DirectoryInfo(directory).Name.ToLower();
+
+			//	Only process the directory if the name of the directory invalid
+			if(!INVALID_DIRECTORIES.Contains(directoryName))
+			{
+				//	Only process the directory if it or its subdirectories contain .xnb files. 
+				if(Directory.GetFiles(directory, "*.xnb", SearchOption.AllDirectories).Length > 0)
+				{
+					PrintClass(directory, Host.ResolvePath(CONTENT_DIR), indent + 1);
+				}
+			}
+		}
+
+		//	End the class scope
+		WriteLine($"{tabs}}}");
+
+		if(INCLUDE_NAMESPACE)
+		{
+			WriteLine("}");
+		}
+	}
+
+
+
+
+	///	<summary>
+	///		Outputs a class based on the directory name
+	///	</summary>
+	/// <param name="dir">
+	///		The fully qualified path to the directory to process
+	///	</param>
+	///	<param name="rootDir">
+	///		The fully qualified path to the root directory where
+	///		all content is built to
+	///	</param>
+	///	<param name="indent">
+	///		The number of indents to place at the beginning of 
+	///		the output
+	///	</param>
+	private void PrintClass(string dir, string rootDir, int indent)
+	{
+		//	Build the tab string
+		string tabs = new string('\t', indent);
+
+		//	Get a DirectoryInfo object based on the directory we're processing
+		var dirInfo = new DirectoryInfo(dir);
+
+		//	create a name for the class based on the directory name
+		string name = CreateClassName(dirInfo.Name);
+
+		//	Write the class signature
+		WriteLine($"{tabs}public static class {name}{Environment.NewLine}{tabs}{{");
+
+		//	Print the fields based on the files in the directory
+		PrintFields(dir, rootDir, indent + 1);
+
+		//	Use recursion to handle sub directories of this directory
+		var directories = Directory.GetDirectories(dir);
+		for(int i = 0; i < directories.Length; i++)
+		{
+			PrintClass(directories[i], rootDir, indent + 1);
+		}
+
+		//	Write out the final } to close the class up
+		WriteLine($"{tabs}}}");
+	}
+
+
+	///	<summary>
+	///		Outputs a field for a class based on the file names
+	///		in the directory
+	///	</summary>
+	/// <param name="dir">
+	///		The fully qualified path to the directory whos files 
+	///		will be processed
+	///	</param>
+	///	<param name="rootDir">
+	///		The fully qualified path to the root directory where 
+	///		all content is built to
+	///	</param>
+	///	<param name="indent">
+	///		The number of indents to place at the beginning of 
+	///		the output
+	///	</param>
+	private void PrintFields(string dir, string rootDir, int indent)
+	{
+		//	Build the tab string
+		string tabs = new string('\t', indent);	
+
+		//	Get collection of only .xnb files that are in the dir only
+		string[] files = Directory.GetFiles(dir, "*.xnb", SearchOption.TopDirectoryOnly);
+
+		//	Iterate over each file
+		for(int i = 0; i < files.Length; i++)
+		{
+			//	Get the file info
+			var fileInfo = new FileInfo(files[i]);
+
+			//	Generate the path to the file relative to the root folder
+			var path = files[i].Substring(files[i].IndexOf(rootDir) + rootDir.Length);
+
+			//	Remove the .xnb from the path
+			path = path.Replace(".xnb", string.Empty);
+
+			//	Remove leading / or convert leading \\ to \
+			if(path[0] == '/' || path[0] == '\\')
+			{
+				path = path.Substring(1);
+			}
+
+			//	Generate a name for the field
+			var name = CreateFieldName(Path.GetFileNameWithoutExtension(files[i]));
+
+			//	Output the field for the file
+			WriteLine($"{tabs}public const string {name} = @\"{path}\";");
+
+
+		}
+	}
+
+	///	<summary>
+	///		Creates a name for a class based on the directory
+	///		name given
+	///	</summary>
+	/// <param name="name">
+	///		The name of the directory to base the class' name
+	///		on
+	///	</param>
+	private string CreateClassName(string name)
+	{
+		if(CLASS_STYLE == ClassStyle.FirstCharUpper && char.IsLower(name[0]))
+		{
+			name = char.ToUpper(name[0]) + name.Substring(1);
+		}
+
+		name = RemoveInvalidCharacters(name);
+		name = HandleKeywords(name);
+
+		return name;
+	}
+
+
+	///	<summary>
+	///		Creates a name for a field based on the file
+	///		name given
+	///	</summary>
+	/// <param name="name">
+	///		The name of the file to base the field's name
+	///		on
+	///	</param>
+	private string CreateFieldName(string name)
+	{
+		if(FIELD_STYLE == FieldStyle.Proper)
+		{
+			var regex = @"(^\w)|(\s\w)";
+			name = Regex.Replace(name, regex, m => m.Value.ToUpper());
+		}
+
+		name = RemoveInvalidCharacters(name);
+		name = HandleKeywords(name);
+
+		return name;
+	}
+
+
+	///	<summary>
+	///		Removes characters from the value given that
+	///		are not allowed in class and field names
+	///	</summary>
+	/// <param name="value">
+	///		The string to remove the invalide characters from
+	///	</param>
+	private string RemoveInvalidCharacters(string value)
+	{
+		//	Remove all non letter and non digit characters
+		var regex = new Regex(@"[^a-zA-Z_0-9 ]");
+		value = regex.Replace(value, string.Empty);
+
+		//	Replaces spaces based on SPACE_STYLE
+		if(SPACE_STYLE == SpaceStyle.Remove)
+		{
+			value = value.Replace(" ", string.Empty);
+		}
+		else if(SPACE_STYLE == SpaceStyle.Underscore)
+		{
+			value = value.Replace(" ", "_");
+		}
+
+		//	If the first character is not a letter, put an underscore there
+		if(!char.IsLetter(value[0]))
+		{
+			value = value.Insert(0, "_");
+		}
+
+		return value;
+	}
+
+
+	///	<summary>
+	///		Handles edge cases where the name generated for a
+	///		class or field is actually a C# reserved keyword
+	///	</summary>
+	/// <param name="value">
+	///		The string to handle against the keywords
+	///	</param>
+	private string HandleKeywords(string value)
+	{
+		if(keywords.Contains(value))
+		{
+			if(RESERVED_STYLE == ReservedStyle.AtSymbol)
+			{
+				value.Insert(0, "@");
+			}
+			else if(RESERVED_STYLE == ReservedStyle.Underscore)
+			{
+				value.Insert(0, "_");
+			}
+		}
+
+		return value;
+	}
+#>
