@@ -42,9 +42,9 @@ After adding the ContentReference.tt file to your project, there are a few confi
 
 | Option | Description |
 |---|---|
-INCLUDE_NAMESPACE |  Set this to `true` or `false`.  If `true`, then the generated class file will be encapsulated by a namespace statement |
+INCLUDE_NAMESPACE |  <p>Set this to `true` or `false`.  If `true`, then the generated class file will be encapsulated by a namespace statement</p> |
 NAMESPACE | If the `INCLUDE_NAMESPACE` option is set to `true`, then this determines the name of the namespace to use
-CLASS_STYLE | Determines how class names are generated. Available values are `ClassStyle.FirstCharUpper` and `ClassStyle.MatchName`.  
+CLASS_STYLE | Determines how class names are generated. Available values are `ClassStyle.FirstCharUpper` and `ClassStyle.MatchName`
   
   `ClassStyle.FirstCharUpper` will force the name of the class generad to have the first character in upper case and the reset in lower case  
   
