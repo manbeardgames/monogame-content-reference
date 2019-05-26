@@ -45,7 +45,7 @@ RESERVED_STYLE = ReservedStyle.AtSymbol;
 
 //	This is the directory where the content tool outputs the .xnb files it builds
 //	For MonoGame Cross Platform Desktop Project it's "bin\DesktopGl"
-CONTENT_DIR = @"bin\DesktopGL";
+CONTENT_DIR = @"content\bin\DesktopGL";
 #>
 <#
 
