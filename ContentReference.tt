@@ -336,11 +336,11 @@ CONTENT_DIR = @"content\bin\DesktopGL";
 		{
 			if(RESERVED_STYLE == ReservedStyle.AtSymbol)
 			{
-				value.Insert(0, "@");
+				value = "@" + value;
 			}
 			else if(RESERVED_STYLE == ReservedStyle.Underscore)
 			{
-				value.Insert(0, "_");
+				value = "_" + value;
 			}
 		}
 
